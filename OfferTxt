@@ -1,0 +1,136 @@
+*BASIC
+NEW
+AUTO
+REM>OfferAsm
+:
+REM Offer a *command to specific
+REM sideways ROM or current filing
+REM system.
+:
+DIM code% 500
+OSARGS=&FFDA
+OSASCI=&FFE3
+SCRATCH=&A8
+PARAMS=&F2
+ROMID=SCRATCH+2
+ROMCMD=&F2
+ROMSELRAM=&F4
+ROMSEL=&FE30
+SVCENTRY=&8003
+ROMFSCV=&FF2D
+:
+REM ver%=0 for B, 1 for Master
+FOR ver%=0 TO 1
+IF ver%=0 THEN target%=&FFFF0900 ELSE target%=&FFFFDD00
+IF ver%=0 THEN execname$="Offer" ELSE execname$="OfferMas"
+:
+FOR pass%=0 TO 1
+opt%=4+pass%*2
+O%=code%
+P%=target%
+[ OPT opt%
+.start
+\ fetch address of command line
+\ parameters into SCRATCH
+LDA #1
+LDY #0
+LDX #PARAMS
+JSR OSARGS
+\ check for ROM ID in parameters
+LDY #0
+LDA (PARAMS),Y
+CMP #ASC"@" \ =FS command
+BEQ fscmd
+CMP #ASC"0"
+BCC badrom \ ID<"0"
+SBC #ASC"0" \ sub so "0"=0
+CMP #9+1
+BCC svccmd \ ID<="9"
+SBC #ASC"A"-ASC"9"-1 \ sub so "A"=10
+CMP #10
+BCC badrom \ "9"<ID<"A"
+CMP #16
+BCC svccmd \ ID<="F"
+.badrom
+LDY #&FF
+.loop
+INY
+LDA badrommsg,Y
+JSR OSASCI
+CMP #13
+BNE loop
+.end
+RTS
+:
+.fscmd
+JSR skipspaces
+BCS end
+\ build FSCV call
+LDA #3 \ FS *command
+LDX PARAMS
+LDY PARAMS+1
+JSR ROMFSCV
+RTS
+:
+.svccmd
+\ store ROM ID
+STA ROMID
+JSR skipspaces
+BCS end
+\ save current ROM
+LDA ROMSELRAM
+PHA
+\ page in OFFERed ROM
+LDA ROMID
+STA ROMSELRAM
+STA ROMSEL
+\ create ROM service call
+TAX \ ROMID
+LDA #4 \ unknown *command
+LDY #0 \ offset from PARAMS
+JSR SVCENTRY
+\ restore current ROM
+PLA
+STA ROMSELRAM
+STA ROMSEL
+RTS
+
+.skipspaces
+\ skip spaces after ROM ID
+\ return=C if error
+LDY #0
+.loop
+\ move to next char in params
+INC PARAMS
+LDA (PARAMS),Y
+CMP #ASC" "
+BEQ loop
+\ at first char after spaces
+CMP #13
+BEQ nocmd
+CLC
+RTS
+:
+.nocmd
+\ no command
+LDY #&FF
+.loop
+INY
+LDA nocmdmsg,Y
+JSR OSASCI
+CMP #13
+BNE loop
+SEC
+RTS
+:
+.badrommsg
+EQUS "Bad ROM":EQUB 13
+.nocmdmsg
+EQUS "Missing command":EQUB 13
+]
+NEXT
+save$="SAVE "+execname$+" "+STR$~code%+"+"+STR$~(O%-code%)+" "+STR$~target%+" "+STR$~((target% AND &FFFF0000) OR start)
+PRINT "*";save$
+OSCLI save$
+:
+NEXT
