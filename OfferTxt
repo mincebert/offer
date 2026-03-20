@@ -19,10 +19,12 @@ ROMSEL=&FE30
 SVCENTRY=&8003
 ROMFSCV=&FF2D
 :
-REM ver%=0 for B, 1 for Master
-FOR ver%=0 TO 1
-IF ver%=0 THEN target%=&FFFF0900 ELSE target%=&FFFFDD00
-IF ver%=0 THEN execname$="Offer" ELSE execname$="OfferMas"
+REM B%=0 for B, 1 for Master
+:
+target%=&FFFF0900
+IF B%=1 THEN target%=&FFFFDD00
+execname$="Offer"
+IF B%=1 THEN execname$="OfferMas"
 :
 FOR pass%=0 TO 1
 opt%=4+pass%*2
@@ -94,7 +96,6 @@ PLA
 STA ROMSELRAM
 STA ROMSEL
 RTS
-
 .skipspaces
 \ skip spaces after ROM ID
 \ return=C if error
@@ -132,5 +133,3 @@ NEXT
 save$="SAVE "+execname$+" "+STR$~code%+"+"+STR$~(O%-code%)+" "+STR$~target%+" "+STR$~((target% AND &FFFF0000) OR start)
 PRINT "*";save$
 OSCLI save$
-:
-NEXT
