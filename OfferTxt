@@ -18,6 +18,8 @@ ROMSELRAM=&F4
 ROMSEL=&FE30
 SVCENTRY=&8003
 ROMFSCV=&FF2D
+ERRBADADDR=252
+ERRBADCMD=254
 :
 REM B%=0 for B, 1 for Master
 :
@@ -54,19 +56,13 @@ BCC badrom \ "9"<ID<"A"
 CMP #16
 BCC svccmd \ ID<="F"
 .badrom
-LDY #&FF
-.loop
-INY
-LDA badrommsg,Y
-JSR OSASCI
-CMP #13
-BNE loop
-.end
-RTS
+BRK
+EQUB ERRBADADDR
+EQUS "Bad ROM"
+BRK
 :
 .fscmd
 JSR skipspaces
-BCS end
 \ build FSCV call
 LDA #3 \ FS *command
 LDX PARAMS
@@ -78,7 +74,6 @@ RTS
 \ store ROM ID
 STA ROMID
 JSR skipspaces
-BCS end
 \ save current ROM
 LDA ROMSELRAM
 PHA
@@ -91,10 +86,13 @@ TAX \ ROMID
 LDA #4 \ unknown *command
 LDY #0 \ offset from PARAMS
 JSR SVCENTRY
+TAX
 \ restore current ROM
 PLA
 STA ROMSELRAM
 STA ROMSEL
+CPX #0
+BNE ignored
 RTS
 .skipspaces
 \ skip spaces after ROM ID
@@ -109,25 +107,19 @@ BEQ loop
 \ at first char after spaces
 CMP #13
 BEQ nocmd
-CLC
 RTS
 :
 .nocmd
-\ no command
-LDY #&FF
-.loop
-INY
-LDA nocmdmsg,Y
-JSR OSASCI
-CMP #13
-BNE loop
-SEC
-RTS
+BRK
+EQUB ERRBADCMD
+EQUS "Missing command"
+BRK
 :
-.badrommsg
-EQUS "Bad ROM":EQUB 13
-.nocmdmsg
-EQUS "Missing command":EQUB 13
+.ignored
+BRK
+EQUB ERRBADCMD
+EQUS "Ignored"
+BRK
 ]
 NEXT
 save$="SAVE "+execname$+" "+STR$~code%+"+"+STR$~(O%-code%)+" "+STR$~target%+" "+STR$~((target% AND &FFFF0000) OR start)
