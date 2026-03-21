@@ -43,6 +43,8 @@ JSR OSARGS
 \ check for ROM ID in parameters
 LDY #0
 LDA (PARAMS),Y
+CMP #13
+BEQ syntax
 CMP #ASC"@" \ =FS command
 BEQ fscmd
 CMP #ASC"0"
@@ -59,6 +61,12 @@ BCC svccmd \ ID<="F"
 BRK
 EQUB ERRBADADDR
 EQUS "Bad ROM"
+BRK
+:
+.syntax
+BRK
+EQUB ERRBADCMD
+EQUS "Syntax: OFFER <rom>/@ <command>"
 BRK
 :
 .fscmd
@@ -94,6 +102,7 @@ STA ROMSEL
 CPX #0
 BNE ignored
 RTS
+:
 .skipspaces
 \ skip spaces after ROM ID
 \ return=C if error
