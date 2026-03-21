@@ -8,6 +8,7 @@ REM sideways ROM or current filing
 REM system.
 :
 DIM code% 500
+OSBYTE=&FFF4
 OSARGS=&FFDA
 OSASCI=&FFE3
 SCRATCH=&A8
@@ -15,7 +16,8 @@ PARAMS=&F2
 ROMID=SCRATCH+2
 ROMCMD=&F2
 ROMSELRAM=&F4
-ROMSEL=&FE30
+ROMSELBBC=&FE30
+ROMSELELK=&FE05
 SVCENTRY=&8003
 ROMFSCV=&FF2D
 ERRBADADDR=252
@@ -79,26 +81,50 @@ JSR ROMFSCV
 RTS
 :
 .svccmd
-\ store ROM ID
 STA ROMID
+\ check if Electron
+LDA #0
+LDX #1
+JSR OSBYTE
+CPX #0
+BNE skippatch \ not Electron
+\ patch for Electron
+LDA #ROMSELELK AND &FF
+STA romselpatch1+1
+STA romselpatch2+1
+STA romselpatch3+1
+STA romselpatch4+1
+.skippatch
+\ store ROM ID
 JSR skipspaces
 \ save current ROM
 LDA ROMSELRAM
 PHA
-\ page in OFFERed ROM
+\ page in OFFERed ROM (&0C first,
+\ in case running on Elk)
+LDA &0C
+STA ROMSELRAM
+.romselpatch1
+STA ROMSELBBC
 LDA ROMID
 STA ROMSELRAM
-STA ROMSEL
+.romselpatch2
+STA ROMSELBBC
 \ create ROM service call
 TAX \ ROMID
 LDA #4 \ unknown *command
 LDY #0 \ offset from PARAMS
 JSR SVCENTRY
 TAX
-\ restore current ROM
+\ restore original ROM
+LDA #&0C
+STA ROMSELRAM
+.romselpatch3
+STA ROMSELBBC
 PLA
 STA ROMSELRAM
-STA ROMSEL
+.romselpatch4
+STA ROMSELBBC
 CPX #0
 BNE ignored
 RTS
