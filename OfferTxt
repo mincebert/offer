@@ -11,10 +11,7 @@ DIM code% 500
 OSBYTE=&FFF4
 OSARGS=&FFDA
 OSASCI=&FFE3
-SCRATCH=&A8
 PARAMS=&F2
-ROMID=SCRATCH+2
-ROMCMD=&F2
 ROMSELRAM=&F4
 ROMSELBBC=&FE30
 ROMSELELK=&FE05
@@ -81,7 +78,7 @@ JSR ROMFSCV
 RTS
 :
 .svccmd
-STA ROMID
+PHA
 \ check if Electron
 LDA #0
 LDX #1
@@ -97,6 +94,9 @@ STA romselpatch4+1
 .skippatch
 \ store ROM ID
 JSR skipspaces
+\ get specified ROM in X
+PLA
+TAX
 \ save current ROM
 LDA ROMSELRAM
 PHA
@@ -106,13 +106,12 @@ LDA &0C
 STA ROMSELRAM
 .romselpatch1
 STA ROMSELBBC
-LDA ROMID
-STA ROMSELRAM
+STX ROMSELRAM
 .romselpatch2
-STA ROMSELBBC
+STX ROMSELBBC
 \ create ROM service call
-TAX \ ROMID
 LDA #4 \ unknown *command
+\ X from above
 LDY #0 \ offset from PARAMS
 JSR SVCENTRY
 TAX
@@ -125,6 +124,7 @@ PLA
 STA ROMSELRAM
 .romselpatch4
 STA ROMSELBBC
+\ check if ROM responded
 CPX #0
 BNE ignored
 RTS
