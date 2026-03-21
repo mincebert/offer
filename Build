@@ -1,1 +1,1 @@
-*BASICLOAD "OfferAsm"B%=0RUNB%=1RUN
+*| Building Offer distribution*BASICLOAD "OfferAsm"*SPOOL OfferSplLIST*SPOOLB%=0RUNB%=1RUN
