@@ -45,7 +45,7 @@ JSR OSARGS
 LDY #0
 LDA (PARAMS),Y
 CMP #13
-BEQ syntax
+BEQ syntaxerr
 CMP #ASC"@" \ =FS command
 BEQ fscmd
 CMP #ASC"0"
@@ -64,7 +64,7 @@ EQUB ERRBADADDR
 EQUS "Bad ROM/@"
 BRK
 :
-.syntax
+.syntaxerr
 BRK
 EQUB ERRBADCMD
 EQUS "Syntax: OFFER <rom>/@ <command>"
@@ -85,7 +85,7 @@ CMP #ASC" "
 BEQ loop
 \ at first char after spaces
 CMP #13
-BEQ nocmd
+BEQ nocmderr
 RTS
 :
 .fscmd
@@ -161,7 +161,7 @@ STA ROMSELBBC
 CPX #&FF
 BEQ notsvcerr
 CPX #0
-BNE ignored
+BNE ignorederr
 RTS
 :
 .notsvc
@@ -170,13 +170,13 @@ RTS
 LDX #&FF
 JMP restorerom
 :
-.nocmd
+.nocmderr
 BRK
 EQUB ERRBADCMD
 EQUS "Missing command"
 BRK
 :
-.ignored
+.ignorederr
 BRK
 EQUB ERRBADCMD
 EQUS "Ignored"
