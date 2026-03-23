@@ -59,7 +59,7 @@ BCC svccmd \ ID<="F"
 .badrom
 BRK
 EQUB ERRBADADDR
-EQUS "Bad ROM"
+EQUS "Bad ROM/@"
 BRK
 :
 .syntax
@@ -67,6 +67,24 @@ BRK
 EQUB ERRBADCMD
 EQUS "Syntax: OFFER <rom>/@ <command>"
 BRK
+:
+.skipspaces
+\ check we have a space after ROM
+LDY #0
+INC PARAMS
+LDA (PARAMS),Y
+CMP #ASC" "
+BNE badrom
+.loop
+\ skip any further spaces
+INC PARAMS
+LDA (PARAMS),Y
+CMP #ASC" "
+BEQ loop
+\ at first char after spaces
+CMP #13
+BEQ nocmd
+RTS
 :
 .fscmd
 JSR skipspaces
@@ -92,9 +110,8 @@ STA romselpatch2+1
 STA romselpatch3+1
 STA romselpatch4+1
 .skippatch
-\ store ROM ID
 JSR skipspaces
-\ get specified ROM in X
+\ transfer specified ROM to X
 PLA
 TAX
 \ save current ROM
@@ -127,21 +144,6 @@ STA ROMSELBBC
 \ check if ROM responded
 CPX #0
 BNE ignored
-RTS
-:
-.skipspaces
-\ skip spaces after ROM ID
-\ return=C if error
-LDY #0
-.loop
-\ move to next char in params
-INC PARAMS
-LDA (PARAMS),Y
-CMP #ASC" "
-BEQ loop
-\ at first char after spaces
-CMP #13
-BEQ nocmd
 RTS
 :
 .nocmd
