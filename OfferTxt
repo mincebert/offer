@@ -47,9 +47,9 @@ CMP #13
 BEQ syntaxerr
 CMP #ASC"@" \ =FS command
 BEQ fscmd
-CMP #ASC"0"
+SEC
+SBC #ASC"0"
 BCC badrom \ ID<"0"
-SBC #ASC"0" \ sub so "0"=0
 CMP #9+1
 BCC svccmd \ ID<="9"
 SBC #ASC"A"-ASC"9"-1 \ sub so "A"=10
