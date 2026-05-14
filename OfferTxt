@@ -71,7 +71,6 @@ BRK
 :
 .skipspaces
 \ check we have a space after ROM
-LDY #0
 INC PARAMS
 LDA (PARAMS),Y
 CMP #ASC" "
