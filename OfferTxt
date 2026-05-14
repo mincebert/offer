@@ -22,11 +22,11 @@ ERRBADADDR=252
 ERRBADCMD=254
 :
 REM B%=0 for B, 1 for Master
+IF B%<0 OR B%>1 THEN B%=0
 :
 target%=&FFFF0900
 IF B%=1 THEN target%=&FFFFDD00
-execname$="OfferB"
-IF B%=1 THEN execname$="OfferMas"
+execname$="Offer"+MID$("BM",B%+1,1)
 :
 FOR pass%=0 TO 1
 opt%=4+pass%*2
